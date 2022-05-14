@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC
+"-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="userMapper">
+	
+	<resultMap id="userResultList" type="User"> <!-- 컬럼명, 멤버명 같으면 작성 안해도되지만 혹시몰라서 작성함 -->
+		<result property="user_no" column="user_no" />
+		<result property="user_email" column="user_email" />
+		<result property="user_name" column="user_name" />
+		<result property="user_admin" column="user_admin" />
+		<result property="user_date" column="user_date" />
+		<result property="login_ok" column="login_ok" />
+	</resultMap>
+	
+	 <select id="userList" resultMap="userResultList">
+		<![CDATA[
+			SELECT * FROM L_USER
+		]]>
+	</select> 
+	
+	<select id="nameSearch" parameterType="String" resultMap="userResultList">
+		select *
+		from l_user
+		where user_name = #{ user_name }
+	</select>
+
+	<select id="dupCheck" parameterType="String" resultType="User">
+		select *
+		from l_user
+		where user_email = #{ user_email }
+	</select>
+	
+	<insert id="insertUser" parameterType="User">
+		insert into l_user values(L_UN_S.nextval, #{ user_email }, #{ user_name }, #{ user_badge , jdbcType = VARCHAR} , default, default, default)
+	</insert>
+	
+	<select id="selectUser" parameterType="String" resultType="User">
+		select * from l_user
+		where user_email = #{ user_email }
+	</select>
+
+	<!-- 송상언 -->
+	
+	<resultMap type="gallery" id="resultGallery">
+		<id column="gallery_no" property="gallery_no" />
+		<result column="user_no" property="user_no" />
+		<result column="gallery_content" property="gallery_content" />
+		<result column="photo_path" property="photo_path" />
+		<result column="hashtag" property="hashtag" />
+		<result column="gallery_readcount" property="gallery_readcount" />
+		<result column="gallery_date" property="gallery_date" />
+	</resultMap>
+	
+	<resultMap type="galleryinfo" id="resultGalleryinfo">
+		<id column="gallery_no" property="gallery_no" />
+		<result column="user_no" property="user_no" />
+		<result column="gallery_content" property="gallery_content" />
+		<result column="photo_path" property="photo_path" />
+		<result column="hashtag" property="hashtag" />
+		<result column="gallery_readcount" property="gallery_readcount" />
+		<result column="gallery_date" property="gallery_date" />
+		<result column="user_name" property="user_name" />
+		<result column="user_badge" property="user_badge" />
+	</resultMap>
+	<resultMap type="gallerylikeinfo" id="resultGallerylikeinfo">
+		<id column="gallery_no" property="gallery_no" />
+		<result column="user_no" property="user_no" />
+		<result column="gallery_content" property="gallery_content" />
+		<result column="photo_path" property="photo_path" />
+		<result column="hashtag" property="hashtag" />
+		<result column="gallery_readcount" property="gallery_readcount" />
+		<result column="gallery_date" property="gallery_date" />
+		<result column="user_name" property="user_name" />
+		<result column="user_badge" property="user_badge" />
+		<result column="user_like" property="user_like" />
+	</resultMap>
+	
+	<select id="selectNewLike3" parameterType="int" resultMap="resultGallerylikeinfo">
+		<![CDATA[
+		SELECT *
+		FROM (SELECT ROWNUM, S.*
+              FROM (SELECT G.*, U.USER_NAME USER_NAME, U.USER_BADGE, NVL(L.USER_NO,0) USER_LIKE
+                    FROM L_GALLERY G
+                    JOIN L_USER U ON U.USER_NO = G.USER_NO
+                    LEFT JOIN (SELECT *
+                               FROM L_LIKE
+                               WHERE USER_NO = ${ user_no }) L 
+                    ON G.GALLERY_NO = L.GALLERY_NO
+                    ORDER BY GALLERY_DATE DESC) S)S
+		WHERE ROWNUM <= 3
+		]]>
+	</select> 
+	
+	<select id="selectHotLike" parameterType="int" resultMap="resultGallerylikeinfo">
+		<![CDATA[
+		SELECT G.*, U.USER_NAME USER_NAME, U.USER_BADGE, NVL(L.USER_NO,0) USER_LIKE
+        FROM L_GALLERY G
+        JOIN L_USER U ON U.USER_NO = G.USER_NO
+        LEFT JOIN (SELECT *
+	               FROM L_LIKE
+	               WHERE USER_NO = ${ user_no }) L ON G.GALLERY_NO = L.GALLERY_NO 
+	               RIGHT JOIN(SELECT * 
+	               			  FROM(SELECT GALLERY_NO, COUNT(*) CNT 
+       							   FROM L_LIKE 
+       							   GROUP BY GALLERY_NO 
+       							   ORDER BY CNT DESC)
+	               			  WHERE ROWNUM <= 8)C 
+	               ON G.GALLERY_NO = C.GALLERY_NO 
+	               WHERE GALLERY_DATE > TO_DATE(SYSDATE-7) 
+	               ORDER BY CNT DESC
+		]]>
+	</select> 
+	
+	
+	<resultMap type="landmark" id="resultLandmark">
+		<id column="landmark_no" property="landmark_no" />
+		<result column="landmark_name" property="landmark_name" />
+		<result column="landmark_address" property="landmark_address" />		
+	</resultMap>
+	
+	<resultMap type="Banner" id="resultBanner">
+		<id column="banner_no" property="banner_no" />
+		<result column="banner_title" property="banner_title" />
+		<result column="banner_content" property="banner_content" />
+		<result column="photo_path" property="photo_path" />
+		<result column="align" property="align" />	
+	</resultMap>
+	
+	<resultMap type="Like" id="resultLike">		
+		<result column="user_no" property="user_no" />
+		<result column="gallery_no" property="gallery_no" />
+		<result column="like_date" property="like_date" />
+	</resultMap>
+	
+	<select id="userLikeList" parameterType="int" resultMap="resultLike">
+		<![CDATA[
+		SELECT * FROM L_LIKE WHERE USER_NO = ${ user_no }
+		]]>
+	</select>
+	
+	<select id="bannerList" resultMap="resultBanner">
+		<![CDATA[
+		select * from L_BANNER
+		]]>
+	</select>
+	
+	<delete id="bannerDelete" parameterType="int">
+		<![CDATA[
+		delete from L_BANNER WHERE BANNER_NO = #{ banner_no }
+		
+		]]>
+	</delete>
+	
+	
+	<select id="landmarkSearch" parameterType="string" resultMap="resultLandmark">
+		<![CDATA[
+		select * from L_LANDMARK WHERE LANDMARK_NAME LIKE '%' || #{ search } || '%'
+		]]>
+	</select>
+	
+	<select id="selectUserInfo" parameterType="int" resultType="User">
+		select * from l_user
+		where user_no = #{ user_no }
+	</select>
+	
+	<select id="galleryCount" parameterType="int" resultType="_int">
+		<![CDATA[
+		SELECT COUNT(*) FROM L_GALLERY WHERE USER_NO = #{user_no}
+		]]>
+	</select>
+	<select id="allGalleryCount" parameterType="int" resultType="_int">
+		<![CDATA[
+		SELECT COUNT(*) FROM L_GALLERY
+		]]>
+	</select>
+	
+	<select id="likeCount" parameterType="int" resultType="_int">
+		<![CDATA[
+		SELECT COUNT(*) FROM L_LIKE WHERE USER_NO = #{user_no}
+		]]>
+	</select>
+	<select id="replyCount" parameterType="int" resultType="_int">
+		<![CDATA[
+		SELECT COUNT(*) FROM L_COMMENT WHERE USER_NO = #{user_no}
+		]]>
+	</select>
+	
+	 <select id="likeList" parameterType="int" resultMap="resultGallery">
+		<![CDATA[
+			SELECT * FROM(SELECT G.GALLERY_NO GALLERY_NO, G.USER_NO USER_NO,
+					G.GALLERY_CONTENT GALLERY_CONTENT, G.PHOTO_PATH PHOTO_PATH, 
+					G.HASHTAG HASHTAG, G.GALLERY_READCOUNT GALLERY_READCOUNT
+					,G.GALLERY_DATE GALLERY_DATE, L.USER_NO LIKE_USER, L.GALLERY_NO LIKE_GALLERY
+			FROM L_LIKE L LEFT JOIN L_GALLERY G ON L.GALLERY_NO = G.GALLERY_NO)
+			WHERE LIKE_USER = #{ user_no }
+		]]>
+	</select> 
+	
+	
+	<select id="selectMygallery" parameterType="hashMap" resultMap="resultGallery">
+		<![CDATA[
+		select * from (
+		select rownum num, g.* from (
+		select * from (select * from l_gallery
+		where user_no = #{user_no}) order by gallery_no desc) g)
+		where num >= ${startRow} and num <= ${endRow}
+		]]>
+	</select> 
+	
+	<delete id="heartX" parameterType="hashMap">
+		<![CDATA[
+		DELETE FROM L_LIKE 
+		WHERE USER_NO = #{ user_no } AND GALLERY_NO = #{ g_no }
+		]]>
+	</delete> 
+	
+	<insert id="heartO" parameterType="hashMap">
+		<![CDATA[
+		INSERT INTO L_LIKE VALUES(#{ user_no }, #{ g_no }, DEFAULT)
+		]]>
+	</insert> 
+	
+	<select id="updateUser" parameterType="User">
+		update l_user
+		set user_name = #{ user_name }		
+		where user_no = #{ user_no }
+	</select>
+	
+	<select id="updateBadge" parameterType="User">
+		update l_user
+		set user_badge = #{ user_badge }		
+		where user_no = #{ user_no }
+	</select>
+	
+	<insert id="bannerInsert" parameterType="Banner">
+		INSERT INTO L_BANNER VALUES(L_BN_S.NEXTVAL, #{ banner_title },#{ banner_content }, #{ photo_path },'L')
+	</insert>
+	
+	<update id="updateLoginOK" parameterType="User">
+		update l_user
+		set	login_ok = #{ login_ok }
+		where user_no = #{ user_no }
+	</update>
+	
+	<update id="updateAdmin" parameterType="User">
+		update l_user
+		set	user_admin = #{ user_admin }
+		where user_no = #{ user_no }
+	</update>
+	<select id="selectNew3" resultMap="resultGalleryinfo">
+		<![CDATA[
+		select * from (SELECT rownum num, l.* FROM(SELECT G.GALLERY_NO GALLERY_NO, G.USER_NO USER_NO,
+		G.GALLERY_CONTENT GALLERY_CONTENT, G.PHOTO_PATH PHOTO_PATH 
+		,G.HASHTAG HASHTAG, G.GALLERY_READCOUNT GALLERY_READCOUNT
+		,G.GALLERY_DATE GALLERY_DATE, U.USER_NAME USER_NAME, U.USER_BADGE
+		FROM L_GALLERY G LEFT JOIN L_USER U ON U.USER_NO = G.USER_NO ORDER BY GALLERY_NO DESC) l)
+		WHERE NUM >= 1 AND NUM <=3
+		]]>
+	</select> 
+	
+	
+	
+	
+	<select id="selectTopWeek" resultMap="resultGalleryinfo">
+		<![CDATA[
+		SELECT C.*, U.USER_NAME, U.USER_BADGE FROM(SELECT G.*
+		FROM L_GALLERY G
+		LEFT OUTER JOIN(SELECT GALLERY_NO, COUNT(*) FROM L_LIKE GROUP BY GALLERY_NO)L ON G.GALLERY_NO = L.GALLERY_NO
+		WHERE GALLERY_DATE > TO_DATE(SYSDATE-7))C LEFT JOIN L_USER U ON C.USER_NO = U.USER_NO
+		]]>
+	</select> 
+	
+	<!-- 장고 로그인 -->
+	<insert id="insertLink" parameterType="HashMap">
+		INSERT INTO L_LINK 
+		VALUES(#{ USER_NO }, #{ LINK_KEY }, DEFAULT)
+	</insert>
+	
+	<delete id="deleteKey">
+		DELETE FROM L_LINK 
+		WHERE LINK_KEY = #{ LINK_KEY }
+	</delete>
+	
+	<delete id="deleteDate" parameterType="String">
+		DELETE FROM L_LINK 
+		WHERE LINK_DATE NOT BETWEEN (SYSDATE - 5/24/60) AND SYSDATE
+	</delete>
+	
+	<select id="selectLink" parameterType="String">
+		SELECT COUNT(*)
+		FROM L_LINK
+		WHERE LINK_KEY = #{ LINK_KEY } AND
+              LINK_DATE BETWEEN (SYSDATE - 5/24/60) AND SYSDATE
+	</select>
+	
+	
+	
+</mapper>
